@@ -11,7 +11,7 @@ import SwiftUI
 struct BankAppConcurrencyApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            BankDashboardView()
         }
     }
 }
