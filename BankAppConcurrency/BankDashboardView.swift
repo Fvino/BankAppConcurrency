@@ -26,11 +26,14 @@ struct BankDashboardView: View {
             Text("Transactions: \(viewModel.transactions.count)")
             
             Button("Load Data") {
-                Task {
-                    await viewModel.loadData()
-                }
+                viewModel.startLoading()
             }
             .disabled(viewModel.isLoading)
+            
+            Button("Cancel") {
+                viewModel.cancelLoading()
+            }
+            .disabled(!viewModel.isLoading)
         }
         .padding()
     }

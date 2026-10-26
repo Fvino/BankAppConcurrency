@@ -19,26 +19,61 @@ final class BankDashboardViewModel {
     private(set) var transactions: [BankTransaction] = []
     private(set) var isLoading = false
     
+    @ObservationIgnored
+    private var loadingTask: Task<Void, Never>?
+    
     init(service: any BankServiceProtocol) {
         self.service = service
     }
     
-    func loadData() async {
-        guard !isLoading else { return }
+    func startLoading() {
+        guard !isLoading else {
+            print("Already loading")
+            return
+        }
         
+        print("Start loading")
         isLoading = true
         
-        defer { isLoading = false }
-        
-        do {
-            profile = try await service.fetchProfile()
-            accounts = try await service.fetchAccounts()
-            transactions = try await service.fetchTransactions()
+        loadingTask = Task {
             
-            print("All data loaded")
             
-        } catch {
-           print("Loading failed: \(error)")
+            defer {
+                print("Task finished")
+                isLoading = false
+                loadingTask = nil
+            }
+            
+            do {
+                async let profileResult = service.fetchProfile()
+                async let accountsResult = service.fetchAccounts()
+                async let transacionsResult = service.fetchTransactions()
+                
+                let (profile, accounts, transactions) = try await (
+                    profileResult,
+                    accountsResult,
+                    transacionsResult
+                )
+                
+                try Task.checkCancellation()
+                
+                self.profile = profile
+                self.accounts = accounts
+                self.transactions = transactions
+                
+                print("Success")
+                
+            } catch is CancellationError {
+                print("Loading canceled")
+                
+            } catch {
+                print("Loading failed: \(error)")
+            }
         }
+    }
+    
+    func cancelLoading() {
+        print("Cancel requested")
+        loadingTask?.cancel()
     }
 }
