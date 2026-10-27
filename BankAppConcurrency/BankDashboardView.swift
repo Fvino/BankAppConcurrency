@@ -9,7 +9,9 @@ import SwiftUI
 
 struct BankDashboardView: View {
     
-    @State private var viewModel = BankDashboardViewModel(service: MockBankService())
+    @State private var viewModel = BankDashboardViewModel(service: MockBankService(
+//        faillingAccountID: MockBankService.savingAccountID
+    ))
     
     var body: some View {
         VStack(spacing: 20) {

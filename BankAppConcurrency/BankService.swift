@@ -11,9 +11,28 @@ protocol BankServiceProtocol: Sendable {
     func fetchProfile() async throws -> BankProfile
     func fetchAccounts() async throws -> [BankAccount]
     func fetchTransactions() async throws -> [BankTransaction]
+    func fetchTransations(accountID: UUID) async throws -> [BankTransaction]
+}
+
+enum BankServiceError: Error {
+    case transactionsUnavailable
 }
 
 struct MockBankService: BankServiceProtocol {
+    
+    let faillingccountID: UUID?
+    
+    static let currentAccountID = UUID(
+        uuidString: "00000000-0000-0000-0000-000000000001"
+    )!
+    
+    static let savingAccountID = UUID(
+        uuidString: "00000000-0000-0000-0000-000000000002"
+    )!
+    
+    init(faillingAccountID: UUID? = nil) {
+        self.faillingccountID = faillingAccountID
+    }
     
     func fetchProfile() async throws -> BankProfile {
         try await Task.sleep(for: .seconds(1))
@@ -26,12 +45,12 @@ struct MockBankService: BankServiceProtocol {
         
         return [
             BankAccount(
-                id: UUID(),
+                id: Self.currentAccountID,
                 name: "Current account",
                 balance: 8250.80
             ),
             BankAccount(
-                id: UUID(),
+                id: Self.savingAccountID,
                 name: "Savings",
                 balance: 4200.00
             )
@@ -52,6 +71,22 @@ struct MockBankService: BankServiceProtocol {
                 id: UUID(),
                 title: "Salary",
                 amount: 2850.00
+            )
+        ]
+    }
+    
+    func fetchTransations(accountID: UUID) async throws -> [BankTransaction] {
+        try await Task.sleep(for: .seconds(1))
+        
+        if accountID == faillingccountID {
+            throw BankServiceError.transactionsUnavailable
+        }
+        
+        return [
+            BankTransaction(
+                id: UUID(),
+                title: "Transaction for: \(accountID.uuidString.prefix(6))",
+                amount: -25.50
             )
         ]
     }

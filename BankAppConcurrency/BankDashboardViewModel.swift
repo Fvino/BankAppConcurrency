@@ -34,7 +34,6 @@ final class BankDashboardViewModel {
         
         let loadID = UUID()
         currentLoadID = loadID
-        
         isLoading = true
         
         loadingTask = Task {
@@ -50,13 +49,13 @@ final class BankDashboardViewModel {
             do {
                 async let profileResult = service.fetchProfile()
                 async let accountsResult = service.fetchAccounts()
-                async let transacionsResult = service.fetchTransactions()
                 
-                let (profile, accounts, transactions) = try await (
+                let (profile, accounts) = try await (
                     profileResult,
-                    accountsResult,
-                    transacionsResult
+                    accountsResult
                 )
+                
+                let transactions = try await loadTransactionsForAccount(accounts)
                 
                 try Task.checkCancellation()
                 
@@ -80,5 +79,40 @@ final class BankDashboardViewModel {
     func cancelLoading() {
         print("Cancel requested")
         loadingTask?.cancel()
+    }
+    
+    func loadTransactionsForAccount(_ accounts: [BankAccount]) async throws -> [BankTransaction] {
+        
+        let service = service
+        
+        return try await withThrowingTaskGroup(
+            of: [BankTransaction].self
+        ) {
+            group in
+            
+            for account in accounts {
+                
+                group.addTask {
+                    do {
+                        return try await service.fetchTransations(accountID: account.id)
+                        
+                    } catch is CancellationError {
+                        throw CancellationError()
+                        
+                    } catch {
+                        print("Failed to load transactions for \(account.name)")
+                        return []
+                    }
+                }
+                
+            }
+            
+            var allTransactions: [BankTransaction] = []
+            
+            for try await transactions in group {
+                allTransactions.append(contentsOf: transactions)
+            }
+            return allTransactions
+        }
     }
 }
