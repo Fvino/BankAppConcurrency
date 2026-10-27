@@ -25,11 +25,10 @@ struct BankDashboardView: View {
             Text("Accounts: \(viewModel.accounts.count)")
             Text("Transactions: \(viewModel.transactions.count)")
             
-            Button("Load Data") {
+            Button("Load Data / Reload Data") {
                 viewModel.startLoading()
             }
-            .disabled(viewModel.isLoading)
-            
+           
             Button("Cancel") {
                 viewModel.cancelLoading()
             }
